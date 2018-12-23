@@ -25,7 +25,7 @@ Overview           |  Air quality sensor
 
 Eve App          |  
 :-------------------------:|
-![Eve app](https://lh6.googleusercontent.com/MNIFVUyIhaz0ml6uAljl1TeNlIueBETSCA267kK2T0Q4im8t4IPsBkpA16ceVoBbOAcvdg06LSdnaw_eJU8y=w800-h600)  | 
+![Eve app](http://oi66.tinypic.com/34opqbq.jpg)  | 
 
 ## Configuration
 
