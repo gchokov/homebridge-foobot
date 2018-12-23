@@ -3,7 +3,7 @@
   .
   .
   {
-      "accessory": "FooBot",
+      "accessory": "Foobot",
       "name": "Foobot",
       "foobotDeviceIndex": 0,
       "username": "email@domain.com",

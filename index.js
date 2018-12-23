@@ -170,7 +170,7 @@ module.exports = function(homebridge) {
 	}
 	
 	
-	FooBot.prototype = {
+	Foobot.prototype = {
 		
 		getAllState: function(){
 			if (this.deviceuuid !== 'undefined'){
