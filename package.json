@@ -1,0 +1,28 @@
+{
+  "name": "homebridge-foobot",
+  "version": "0.1.0",
+  "description": "Foobot plugin for homebridge: https://github.com/nfarina/homebridge",
+  "license": "ISC",
+  "keywords": [
+    "homebridge-plugin"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/gchokov/homebridge-foobot.git"
+  },
+  "bugs": {
+    "url": "http://github.com/gchokov/homebridge-foobot/issues"
+  },
+  "engines": {
+    "node": ">=0.8.4",
+    "homebridge": ">=0.3.1"
+  },
+  "dependencies": {
+    "fakegato-history": "^0.4.3",
+    "request": "^2.88.0",
+    "util": "^0.11.1"
+  },
+  "scripts": {
+    "release": "generate-release"
+  }
+}

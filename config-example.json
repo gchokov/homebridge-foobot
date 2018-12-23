@@ -1,0 +1,25 @@
+"accessories": [
+  .
+  .
+  .
+  {
+      "accessory": "FooBot",
+      "name": "Foobot",
+      "foobotDeviceIndex": 0,
+      "username": "email@domain.com",
+      "password": "password",
+      "apikey": "a_long_string_of_api_key_here",
+      "nameAirQuality": "Air Quality",
+      "nameTemperature": "Temperature",
+      "nameHumidity": "Humidity",
+      "nameCO2": "Carbon Dioxide",
+      "showTemperature": true,
+      "showHumidity": true,
+      "showAirQuality": true,
+      "showCO2": true,
+      "getHistoricalStats": true
+  },
+  .
+  .
+  .
+]
