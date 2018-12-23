@@ -1,5 +1,7 @@
-[![npm](https://img.shields.io/npm/v/homebridge-foobot.svg)](https://www.npmjs.com/package/homebridge-foobot)
+[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/gchokov/homebridge-foobot)
+[![HitCount](http://hits.dwyl.io/gchokov/homebridge-foobot.svg)](http://hits.dwyl.io/gchokov/homebridge-foobot)
 [![GitHub last commit](https://img.shields.io/github/last-commit/gchokov/homebridge-foobot.svg)](https://github.com/gchokov/homebridge-foobot)
+[![npm](https://img.shields.io/npm/v/homebridge-foobot.svg)](https://www.npmjs.com/package/homebridge-foobot)
 
 # homebridge-foobot
 This is a [homebridge](https://github.com/nfarina/homebridge) plugin which lets you integrate your [Foobot](https://foobot.io) air quality monitor into HomeKit. 
