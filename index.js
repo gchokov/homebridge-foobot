@@ -166,7 +166,7 @@ module.exports = function(homebridge) {
 	
 		//Poll info on first run and every 10 minutes
 		this.getAllState();
-		setInterval(this.getAllState.bind(this), 600000);
+		setInterval(this.getAllState.bind(this), 5000); //refresh time 600000
 	}
 	
 	
@@ -207,10 +207,18 @@ module.exports = function(homebridge) {
 						}
 						else {
 							var json = JSON.parse(body);
-							this.log.debug("Got home region:", json);
-							this.gothomehost = 1;
-							this.homehost = json;
-							callback(null);
+							var quotaReached = JSON.stringify(json).includes("quota exceeded. Tomorrow is another day") ? true:false;
+							if (quotaReached)
+							{
+								this.log.debug("Quota exceeded, consider refreshing less often");
+							}
+							else 
+							{
+								this.log.debug("Got home region:", json);
+								this.gothomehost = 1;
+								this.homehost = json;
+								callback(null);
+							}
 						}
 					}.bind(this));
 				}else{
@@ -317,10 +325,15 @@ module.exports = function(homebridge) {
 									else {
 										this.measurements = {};
 										var json = JSON.parse(body);
-										this.lastSensorRefresh = new Date();
-										
-										if (json.datapoints.length >= 1)
+
+										var quotaReached = JSON.stringify(json).includes("quota exceeded. Tomorrow is another day") ? true:false;
+										if (quotaReached)
 										{
+											this.log.debug("Quota exceeded, consider refreshing less often");
+										}
+										else if ((json.datapoints.length >= 1) )
+										{
+											this.lastSensorRefresh = new Date();
 											for (let i = 0; i < json.sensors.length; i++) {
 												switch(json.sensors[i]) {
 													case "pm":
@@ -440,10 +453,15 @@ module.exports = function(homebridge) {
 									else {
 										
 										var json = JSON.parse(body);
-										this.log.debug("Downloaded " + json.datapoints.length + " datapoints for " + json.sensors.length + " senors");
-										
-										if (json.datapoints.length >= 1)
+
+										var quotaReached = JSON.stringify(json).includes("quota exceeded. Tomorrow is another day") ? true:false;
+										if (quotaReached)
 										{
+											this.log.debug("Quota exceeded, consider adding refreshing less often");
+										}
+										else if ((json.datapoints.length >= 1) )
+										{
+											this.log.debug("Downloaded " + json.datapoints.length + " datapoints for " + json.sensors.length + " senors");
 											for (let i = 0; i < json.sensors.length; i++) {
 												this.historicalmeasurements.push([]);
 												switch(json.sensors[i]) {
