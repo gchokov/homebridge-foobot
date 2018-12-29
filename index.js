@@ -510,7 +510,7 @@ module.exports = function(homebridge) {
 						callback();
 					}
 				} else {
-					this.log.debug("No air purifiers found");
+					this.log.debug("No Foobot devices found");
 				}
 			},
 			
