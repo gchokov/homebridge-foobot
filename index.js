@@ -166,7 +166,7 @@ module.exports = function(homebridge) {
 	
 		//Poll info on first run and every 10 minutes
 		this.getAllState();
-		setInterval(this.getAllState.bind(this), 5000); //refresh time 600000
+		setInterval(this.getAllState.bind(this), 600000); //refresh time 600000
 	}
 	
 	
