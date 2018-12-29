@@ -188,83 +188,28 @@ module.exports = function(homebridge) {
 				}.bind(this));
 			},
 			
-			getHomehost: function(callback) { 
-				/*
-				if(this.gothomehost != 1){
-					//Build the request
-					var options = {
-						url: this.base_API_url,
-						method: 'get',
-						headers: {
-							'X-API-KEY-TOKEN': this.apikey
-						}
-					};
-					
-					//Send request
-					this.httpRequest(options, function(error, response, body) {
-						if (error) {
-							this.log.debug('HTTP function failed: %s', error);
-							
-						}
-						else {
-							var json = JSON.parse(body);
-							var quotaReached = JSON.stringify(json).includes("quota exceeded. Tomorrow is another day") ? true:false;
-							if (quotaReached)
-							{
-								this.log.debug("Quota exceeded, consider refreshing less often");
-								this.measurements = {};
-								this.measurements.pm = "0";
-								this.measurements.tmp = "0";
-								this.measurements.hum = "0";
-								this.measurements.co2 = "0";
-								this.measurements.airquality = "No data"
-								this.measurements.airqualityppm = "0";
-								this.measurements.voc = "0"
-								this.measurements.allpollu = "0";
-								callback(null);
-							}
-							else 
-							{
-								this.log.debug("Got home region:", json);
-								this.gothomehost = 1;
-								this.homehost = json;
-								callback(null);
-							}
-						}
-					}.bind(this));
-				}else{
-					this.log.debug("Already have region");
-					callback(null);
-				}
-				*/
-				callback(null);
-			},
-			
 			login: function(callback) {
 				if(this.loggedin != 1){
-					//Build the request and use returned value
-					this.getHomehost(function(){
-						var options = {
-							url: 'https://api.foobot.io/v2/user/' + this.username + '/login/',
-							method: 'get',
-							headers: {
-								'X-API-KEY-TOKEN': this.apikey,
-								'Authorization': 'Basic ' + Buffer.from(this.username + ':' + this.password).toString('base64')
-							}
-						};
-						//Send request
-						this.httpRequest(options, function(error, response) {
-							if (error) {
-								this.log.debug('HTTP function failed: %s', error);
-								callback(error);
-							}
-							else {
-								this.loggedin = 1;
-								this.log.debug("Logged in to API");
-								this.authtoken = response.headers['x-auth-token'];
-								callback(null);
-							}
-						}.bind(this));
+					var options = {
+						url: 'https://api.foobot.io/v2/user/' + this.username + '/login/',
+						method: 'get',
+						headers: {
+							'X-API-KEY-TOKEN': this.apikey,
+							'Authorization': 'Basic ' + Buffer.from(this.username + ':' + this.password).toString('base64')
+						}
+					};
+					//Send request
+					this.httpRequest(options, function(error, response) {
+						if (error) {
+							this.log.debug('HTTP function failed: %s', error);
+							callback(error);
+						}
+						else {
+							this.loggedin = 1;
+							this.log.debug("Logged in to API");
+							this.authtoken = response.headers['x-auth-token'];
+							callback(null);
+						}
 					}.bind(this));
 				} else {
 					this.log.debug("Already logged in");
