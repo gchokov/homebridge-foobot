@@ -188,7 +188,8 @@ module.exports = function(homebridge) {
 				}.bind(this));
 			},
 			
-			getHomehost: function(callback) {
+			getHomehost: function(callback) { 
+				/*
 				if(this.gothomehost != 1){
 					//Build the request
 					var options = {
@@ -203,7 +204,7 @@ module.exports = function(homebridge) {
 					this.httpRequest(options, function(error, response, body) {
 						if (error) {
 							this.log.debug('HTTP function failed: %s', error);
-							callback(error);
+							
 						}
 						else {
 							var json = JSON.parse(body);
@@ -211,6 +212,16 @@ module.exports = function(homebridge) {
 							if (quotaReached)
 							{
 								this.log.debug("Quota exceeded, consider refreshing less often");
+								this.measurements = {};
+								this.measurements.pm = "0";
+								this.measurements.tmp = "0";
+								this.measurements.hum = "0";
+								this.measurements.co2 = "0";
+								this.measurements.airquality = "No data"
+								this.measurements.airqualityppm = "0";
+								this.measurements.voc = "0"
+								this.measurements.allpollu = "0";
+								callback(null);
 							}
 							else 
 							{
@@ -225,6 +236,8 @@ module.exports = function(homebridge) {
 					this.log.debug("Already have region");
 					callback(null);
 				}
+				*/
+				callback(null);
 			},
 			
 			login: function(callback) {
@@ -232,7 +245,7 @@ module.exports = function(homebridge) {
 					//Build the request and use returned value
 					this.getHomehost(function(){
 						var options = {
-							url: 'https://' + this.homehost + '/v2/user/' + this.username + '/login/',
+							url: 'https://api.foobot.io/v2/user/' + this.username + '/login/',
 							method: 'get',
 							headers: {
 								'X-API-KEY-TOKEN': this.apikey,
@@ -264,7 +277,7 @@ module.exports = function(homebridge) {
 					//Build request and get UUID
 					this.login(function(){
 						var options = {
-							url: 'https://' + this.homehost + '/v2/owner/' + this.username + '/device/',
+							url: 'https://api.foobot.io/v2/owner/' + this.username + '/device/',
 							method: 'get',
 							headers: {
 								'X-API-KEY-TOKEN': this.apikey,
@@ -280,15 +293,20 @@ module.exports = function(homebridge) {
 							else {
 								var json = JSON.parse(body);
 								var numberofdevices = '';
-								if (this.foobotDeviceIndex < json.length) {
+								var quotaReached = JSON.stringify(json).includes("quota exceeded. Tomorrow is another day") ? true:false;
+								if (quotaReached)
+								{
+									this.log.debug('\x1b[36m%s\x1b[0m',"Foobot specified is higher than number of foobot devices available, or API quota exceeded");
+									this.havedeviceID = 0;
+								}
+								else if (this.foobotDeviceIndex < json.length) 
+								{
 									this.deviceuuid = json[this.foobotDeviceIndex].uuid;
 									this.devicename = json[this.foobotDeviceIndex].name;
 									this.havedeviceID = 1;
 									this.log.debug("Got device ID"); 
-									callback(null);
-								} else {
-									this.log.debug("Foobot specified is higher than number of foobot devices available");
 								}
+								callback(null);
 							}
 						}.bind(this));
 					}.bind(this));
@@ -309,31 +327,42 @@ module.exports = function(homebridge) {
 							//Build the request and use returned value
 							this.GetFoobotID(function(){
 								var options = {
-									url: 'https://' + this.homehost + '/v2/device/' + this.deviceuuid + '/datapoint/0/last/0/',
+									url: 'https://api.foobot.io/v2/device/' + this.deviceuuid + '/datapoint/0/last/0/',
 									method: 'get',
 									headers: {
 										'X-API-KEY-TOKEN': this.apikey,
-										'X-AUTH-TOKEN': this.authtoken
+										'X-AUTH-TOKEN': this.authtoken //TODO: Explore API usage without AUTH token. Not required with CURL. Less API calls.
 									}
 								};
 								//Send request
 								this.httpRequest(options, function(error, response, body) {
 									if (error) {
 										this.log.debug('HTTP function failed: %s', error);
-										callback(error);
+										this.log.debug('Continuing to prevent homebridge fail.');
+										//callback(error);
+										callback(null);
 									}
 									else {
 										this.measurements = {};
 										var json = JSON.parse(body);
+										this.lastSensorRefresh = new Date();
 
 										var quotaReached = JSON.stringify(json).includes("quota exceeded. Tomorrow is another day") ? true:false;
 										if (quotaReached)
 										{
-											this.log.debug("Quota exceeded, consider refreshing less often");
+											this.log.debug('\x1b[36m%s\x1b[0m',"Quota exceeded, consider refreshing less often");
+											this.log.debug('\x1b[36m%s\x1b[0m',"Setting Sensors to 0 to continue bridge operation.");
+											this.measurements.pm = "0";
+											this.measurements.tmp = "0";
+											this.measurements.hum = "0";
+											this.measurements.co2 = "0";
+											this.measurements.airquality = "No data"
+											this.measurements.airqualityppm = "0";
+											this.measurements.voc = "0"
+											this.measurements.allpollu = "0";
 										}
 										else if ((json.datapoints.length >= 1) )
 										{
-											this.lastSensorRefresh = new Date();
 											for (let i = 0; i < json.sensors.length; i++) {
 												switch(json.sensors[i]) {
 													case "pm":
@@ -416,7 +445,7 @@ module.exports = function(homebridge) {
 			},
 			
 			getHistoricalValues: function(callback) {
-				//Get time now and check if we pulled from API in the last 5 minutes
+				//Get time now and check if we pulled from API in the last 30 minutes
 				//if so, don't refresh as this is the max resolution of API
 				var time = new Date();
 				time.setMinutes(time.getMinutes() - 30);
@@ -434,7 +463,7 @@ module.exports = function(homebridge) {
 								var tslastmonth = timelastmonth.toISOString();
 								var options = {
 									//Get datapoints rounded to 600s as higher resolution reduces history in Eve
-									url: 'https://' + this.homehost + '/v2/device/' + this.deviceuuid + '/datapoint/' + tslastmonth + '/' + tsnow + '/600/',
+									url: 'https://api.foobot.io/v2/device/' + this.deviceuuid + '/datapoint/' + tslastmonth + '/' + tsnow + '/600/',
 									method: 'get',
 									headers: {
 										'X-API-KEY-TOKEN': this.apikey,
@@ -457,9 +486,11 @@ module.exports = function(homebridge) {
 										var quotaReached = JSON.stringify(json).includes("quota exceeded. Tomorrow is another day") ? true:false;
 										if (quotaReached)
 										{
-											this.log.debug("Quota exceeded, consider adding refreshing less often");
+											this.log.debug('\x1b[43m',"Quota exceeded, consider adding refreshing less often");
+											this.log.debug('\x1b[43m',"History not refreshed");
+											callback(null);
 										}
-										else if ((json.datapoints.length >= 1) )
+										else if ((json.datapoints.length >= 1))
 										{
 											this.log.debug("Downloaded " + json.datapoints.length + " datapoints for " + json.sensors.length + " senors");
 											for (let i = 0; i < json.sensors.length; i++) {
@@ -510,10 +541,9 @@ module.exports = function(homebridge) {
 													default:
 													break;
 												}
-											}
+											};
+											this.lastHistoricalRefresh = new Date();
 										}
-										
-										this.lastHistoricalRefresh = new Date();
 										callback(null);
 									}
 									
