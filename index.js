@@ -276,7 +276,7 @@ module.exports = function(homebridge) {
 									method: 'get',
 									headers: {
 										'X-API-KEY-TOKEN': this.apikey,
-										'X-AUTH-TOKEN': this.authtoken //TODO: Explore API usage without AUTH token. Not required with CURL. Less API calls.
+										'X-AUTH-TOKEN': this.authtoken //TODO: Explore API usage without AUTH token. Not required with CURL. Less API calls if we remove login calls
 									}
 								};
 								//Send request
