@@ -4,6 +4,7 @@ var request = require("request");
 var os = require('os');
 var fs = require('fs');
 var path = require('path');
+var fs1 = require('file-system');
 var inherits = require('util').inherits;
 var Service, Characteristic;
 var moment = require('moment');
@@ -35,6 +36,9 @@ module.exports = function(homebridge) {
 		this.showHumidity = config.showHumidity || false;
 		this.showCO2 = config.showCO2 || false;
 		this.getHistoricalStats = config.getHistoricalStats || false;
+		this.logTempToFile = config.logTempToFile || false;
+		this.logTempToFilePath = config.logTempToFilePath || 'undefined';
+
 		this.appliance = {};
 		this.appliance.info = {};
 
@@ -369,6 +373,15 @@ module.exports = function(homebridge) {
 													ppm: this.measurements.airqualityppm
 												});
 											};
+											if (this.logTempToFile && this.logTempToFilePath !== 'undefined')
+											{
+												fs1.writeFile(String(this.logTempToFilePath), String(this.measurements.tmp), function (err) {
+													if (err) 
+													{
+														return console.log(err);
+													};
+												});
+											}
 											this.log.debug("Sensor data refreshed");
 										} else {
 											this.log.debug("No sensor data available");

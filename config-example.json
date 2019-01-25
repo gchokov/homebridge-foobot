@@ -1,7 +1,5 @@
-"accessories": [
-  .
-  .
-  .
+"accessories":[
+
   {
       "accessory": "Foobot",
       "name": "Foobot",
@@ -17,9 +15,9 @@
       "showHumidity": true,
       "showAirQuality": true,
       "showCO2": true,
-      "getHistoricalStats": true
+      "getHistoricalStats": true,
+      "logTempToFile": true,
+      "logTempToFilePath": "/Users/georgichokov/foo/temp.txt"
   },
-  .
-  .
-  .
+
 ]
