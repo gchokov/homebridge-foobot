@@ -65,7 +65,9 @@ Once you get it working, you can turn off individual sensors, or disable the his
       "showHumidity": true,
       "showAirQuality": true,
       "showCO2": true,
-      "getHistoricalStats": true
+      "getHistoricalStats": true,
+      "logTempToFile": true,
+      "logTempToFilePath": "/Users/georgichokov/foo/temp.txt"
   },
   .
   .
