@@ -15,9 +15,9 @@ module.exports = function(homebridge) {
 	var FakeGatoHistoryService = require('fakegato-history')(homebridge);
 	Service = homebridge.hap.Service;
 	Characteristic = homebridge.hap.Characteristic;
-	
+
 	homebridge.registerAccessory("homebridge-foobot", "Foobot", Foobot);
-	
+
 	function Foobot(log, config) {
 		this.log = log;
 		this.username = config.username;
@@ -43,44 +43,44 @@ module.exports = function(homebridge) {
 		this.appliance.info = {};
 
 		this.appliance.info.firmware = "1.2.15"; //tested with this firmware
-		
+
 		this.base_API_url = "https://api.foobot.io/v2/user/" + this.username + "/homehost/";
-		
+
 		this.services = [];
-		
+
 		if(!this.username)
 		throw new Error('Your must provide your Foobot username.');
-		
+
 		if(!this.password)
 		throw new Error('Your must provide your Foobot password.');
-		
+
 		if(!this.apikey)
 		throw new Error('Your must provide your Foobot API Key.');
-		
-		
+
+
 		if(this.showAirQuality){
 			this.airQualitySensorService = new Service.AirQualitySensor(this.nameAirQuality);
-			
+
 			this.airQualitySensorService
 			.getCharacteristic(Characteristic.PM2_5Density)
 			.on('get', this.getPM25Density.bind(this))
 			.getDefaultValue();
-			
+
 			this.airQualitySensorService
 			.getCharacteristic(Characteristic.AirQuality)
 			.on('get', this.getAirQuality.bind(this))
 			.getDefaultValue();
-			
+
 			this.airQualitySensorService
 			.getCharacteristic(Characteristic.VOCDensity)
 			.on('get', this.getVOCDensity.bind(this))
 			.getDefaultValue();
-			
+
 			this.airQualitySensorService
 			.getCharacteristic(Characteristic.CarbonDioxideLevel)
 			.on('get', this.getCO2.bind(this))
 			.getDefaultValue();
-			
+
 			this.airQualitySensorService
 			.setCharacteristic(Characteristic.AirParticulateSize, '2.5um');
 
@@ -90,54 +90,54 @@ module.exports = function(homebridge) {
 			.setCharacteristic(Characteristic.Model, 'Foobot')
 			.setCharacteristic(Characteristic.SerialNumber, hostname + "-" + this.appliance.info.uuid)
 			.setCharacteristic(Characteristic.FirmwareRevision, this.appliance.info.firmware);
-			
+
 			this.services.push(this.serviceInfo);
 			this.services.push(this.airQualitySensorService);
 		}
-		
+
 		if(this.showTemperature){
 			this.temperatureSensorService = new Service.TemperatureSensor(this.nameTemperature);
-			
+
 			this.temperatureSensorService
 			.getCharacteristic(Characteristic.CurrentTemperature)
 			.on('get', this.getTemperature.bind(this))
 			.getDefaultValue();
-			
+
 			this.services.push(this.temperatureSensorService);
 		}
-		
+
 		if(this.showHumidity){
 			this.humiditySensorService = new Service.HumiditySensor(this.nameHumidity);
-			
+
 			this.humiditySensorService
 			.getCharacteristic(Characteristic.CurrentRelativeHumidity)
 			.on('get', this.getHumidity.bind(this))
 			.getDefaultValue();
-			
+
 			this.services.push(this.humiditySensorService);
 		}
-		
+
 		if(this.showCO2){
 			this.CO2SensorService = new Service.CarbonDioxideSensor(this.nameCO2);
-			
+
 			this.CO2SensorService
 			.getCharacteristic(Characteristic.CarbonDioxideLevel)
 			.on('get', this.getCO2.bind(this))
 			.getDefaultValue();
-			
+
 			this.CO2SensorService
 			.getCharacteristic(Characteristic.CarbonDioxidePeakLevel)
 			.on('get', this.getCO2Peak.bind(this))
 			.getDefaultValue();
-			
+
 			this.CO2SensorService
 			.getCharacteristic(Characteristic.CarbonDioxideDetected)
 			.on('get', this.getCO2Detected.bind(this))
 			.getDefaultValue();
-			
+
 			this.services.push(this.CO2SensorService);
 		}
-		
+
 		if(this.getHistoricalStats){
 			console.log("Loggine enabled");
 			//Start fakegato-history custom charactaristic (Air Quality PPM charactaristic)
@@ -154,12 +154,12 @@ module.exports = function(homebridge) {
 				this.value = this.getDefaultValue();
 			};
 			inherits(CustomCharacteristic.AirQualCO2, Characteristic);
-			
+
 			this.airQualitySensorService
 			.getCharacteristic(CustomCharacteristic.AirQualCO2)
 			.on('get', this.getCO2.bind(this));
 			//end fakegato-history charactaristic
-			
+
 			//Fakegato-history masquerading as Eve Room.
 			//Stores history on local filesystem of homebridge appliance
 			this.loggingService = new FakeGatoHistoryService("room", this, {
@@ -167,15 +167,15 @@ module.exports = function(homebridge) {
 			});
 			this.services.push(this.loggingService);
 		}
-	
+
 		//Poll info on first run and every 10 minutes
 		this.getAllState();
 		setInterval(this.getAllState.bind(this), 600000); //refresh time 600000
 	}
-	
-	
+
+
 	Foobot.prototype = {
-		
+
 		getAllState: function(){
 			if (this.deviceuuid !== 'undefined'){
 				this.getLatestValues(function(){});
@@ -183,7 +183,7 @@ module.exports = function(homebridge) {
 				this.log.debug("Foobot devices not found for this username.");
 			}
 		},
-		
+
 		httpRequest: function(options, callback) {
 			request(options,
 				function (error, response, body) {
@@ -191,7 +191,7 @@ module.exports = function(homebridge) {
 					callback(error, response, body);
 				}.bind(this));
 			},
-			
+
 			login: function(callback) {
 				if(this.loggedin != 1){
 					var options = {
@@ -220,7 +220,7 @@ module.exports = function(homebridge) {
 					callback(null);
 				}
 			},
-			
+
 			GetFoobotID: function(callback) {
 				if(this.havedeviceID != 1){
 					//Build request and get UUID
@@ -248,12 +248,12 @@ module.exports = function(homebridge) {
 									this.log.debug('\x1b[36m%s\x1b[0m',"Foobot specified is higher than number of foobot devices available, or API quota exceeded");
 									this.havedeviceID = 0;
 								}
-								else if (this.foobotDeviceIndex < json.length) 
+								else if (this.foobotDeviceIndex < json.length)
 								{
 									this.deviceuuid = json[this.foobotDeviceIndex].uuid;
 									this.devicename = json[this.foobotDeviceIndex].name;
 									this.havedeviceID = 1;
-									this.log.debug("Got device ID"); 
+									this.log.debug("Got device ID");
 								}
 								callback(null);
 							}
@@ -286,8 +286,8 @@ module.exports = function(homebridge) {
 								//Send request
 								this.httpRequest(options, function(error, response, body) {
 									if (error) {
-										this.log.debug('HTTP function failed: %s', error);
-										this.log.debug('Continuing to prevent homebridge fail.');
+										this.log.error('HTTP function failed: %s', error);
+										this.log.error('Continuing to prevent homebridge fail.');
 										//callback(error);
 										callback(null);
 									}
@@ -296,11 +296,27 @@ module.exports = function(homebridge) {
 										var json = JSON.parse(body);
 										this.lastSensorRefresh = new Date();
 
-										var quotaReached = JSON.stringify(json).includes("quota exceeded. Tomorrow is another day") ? true:false;
+										var invalidKey = JSON.stringify(json).includes("invalid key") ? true:false;
+										if (invalidKey)
+										{
+											this.log.error('\x1b[36m%s\x1b[0m',"API key invalid");
+										}
+
+
+										var quotaReached = JSON.stringify(json).includes("quota exceeded") ? true:false;
 										if (quotaReached)
 										{
-											this.log.debug('\x1b[36m%s\x1b[0m',"Quota exceeded, consider refreshing less often");
-											this.log.debug('\x1b[36m%s\x1b[0m',"Setting Sensors to 0 to continue bridge operation.");
+											this.log.error('\x1b[36m%s\x1b[0m',"Quota exceeded, consider refreshing less often");
+											this.log.error('\x1b[36m%s\x1b[0m',"Setting Sensors to 0 to continue bridge operation.");
+										}
+
+										var noDataPoints = (json.datapoints == 'undefined');
+										if (noDataPoints)
+										{
+											this.log.error('\x1b[36m%s\x1b[0m',"No datapoints in the response");
+										}
+
+										if (invalidKey || quotaReached || noDataPoints)
 											this.measurements.pm = "0";
 											this.measurements.tmp = "0";
 											this.measurements.hum = "0";
@@ -310,7 +326,7 @@ module.exports = function(homebridge) {
 											this.measurements.voc = "0"
 											this.measurements.allpollu = "0";
 										}
-										else if ((json.datapoints.length >= 1) )
+										else if (json.datapoints.length >= 1)
 										{
 											for (let i = 0; i < json.sensors.length; i++) {
 												switch(json.sensors[i]) {
@@ -318,17 +334,17 @@ module.exports = function(homebridge) {
 													this.measurements.pm = json.datapoints[0][i];
 													//this.log.debug("Particulate matter 2.5:", this.measurements.pm + " " + json.units[i]);
 													break;
-													
+
 													case "tmp":
 													this.measurements.tmp = json.datapoints[0][i];
 													//this.log.debug("Temperature:", this.measurements.tmp + " " + json.units[i]);
 													break;
-													
+
 													case "hum":
 													this.measurements.hum = json.datapoints[0][i];
 													//this.log.debug("Humidity:", this.measurements.hum + " " + json.units[i]);
 													break;
-													
+
 													case "co2":
 													this.measurements.co2 = json.datapoints[0][i];
 													//this.log.debug("CO2:", this.measurements.co2 + " " + json.units[i]);
@@ -346,22 +362,22 @@ module.exports = function(homebridge) {
 														}
 													}
 													break;
-													
+
 													case "voc":
 													this.measurements.voc = json.datapoints[0][i];
 													//this.log.debug("Volatile organic compounds:", this.measurements.voc + " " + json.units[i]);
 													break;
-													
+
 													case "allpollu":
 													this.measurements.allpollu = item[1];
 													//this.log.debug("All Pollution:", this.measurements.allpollu, json.units[i]);
 													break;
-													
+
 													default:
 													break;
 												}
 											}
-											
+
 											//Fakegato-history add data point
 											//temperature, humidity and air quality
 											//Air Quality measured here as CO2 ppm
@@ -376,7 +392,7 @@ module.exports = function(homebridge) {
 											if (this.logTempToFile && this.logTempToFilePath !== 'undefined')
 											{
 												fs1.writeFile(String(this.logTempToFilePath), String(this.measurements.tmp), function (err) {
-													if (err) 
+													if (err)
 													{
 														return console.log(err);
 													};
@@ -401,7 +417,7 @@ module.exports = function(homebridge) {
 					this.log.debug("No Foobot devices for this account found");
 				}
 			},
-			
+
 			getHistoricalValues: function(callback) {
 				//Get time now and check if we pulled from API in the last 30 minutes
 				//if so, don't refresh as this is the max resolution of API
@@ -410,10 +426,10 @@ module.exports = function(homebridge) {
 				if (this.deviceuuid !== 'undefined') {
 					if(typeof this.lastHistoricalRefresh !== 'undefined' || typeof this.historicalmeasurements[0] == 'undefined') {
 						if(time > this.lastHistoricalRefresh || typeof this.historicalmeasurements[0] == 'undefined') {
-							
+
 							//Build the request and use returned value
 							this.GetFoobotID(function(){
-								
+
 								var timenow = new Date();
 								var timelastmonth = new Date();
 								timelastmonth.setMonth(timelastmonth.getMonth() - 1);
@@ -430,15 +446,15 @@ module.exports = function(homebridge) {
 								};
 								//Send request
 								this.httpRequest(options, function(error, response, body) {
-									
+
 									if (error) {
-										
+
 										this.log.debug('HTTP function failed: %s', error);
 										callback(error);
-										
+
 									}
 									else {
-										
+
 										var json = JSON.parse(body);
 
 										var quotaReached = JSON.stringify(json).includes("quota exceeded. Tomorrow is another day") ? true:false;
@@ -459,43 +475,43 @@ module.exports = function(homebridge) {
 														this.historicalmeasurements[i][j] = json.datapoints[j][i];
 													}
 													break;
-													
+
 													case "pm":
 													for (let j = 0; j < json.datapoints.length; j++){
 														this.historicalmeasurements[i][j] = json.datapoints[j][i];
 													}
 													break;
-													
+
 													case "tmp":
 													for (let j = 0; j < json.datapoints.length; j++){
 														this.historicalmeasurements[i][j] = json.datapoints[j][i];
 													}
 													break;
-													
+
 													case "hum":
 													for (let j = 0; j < json.datapoints.length; j++){
 														this.historicalmeasurements[i][j] = json.datapoints[j][i];
 													}
 													break;
-													
+
 													case "co2":
 													for (let j = 0; j < json.datapoints.length; j++){
 														this.historicalmeasurements[i][j] = json.datapoints[j][i];
 													}
 													break;
-													
+
 													case "voc":
 													for (let j = 0; j < json.datapoints.length; j++){
 														this.historicalmeasurements[i][j] = json.datapoints[j][i];
 													}
 													break;
-													
+
 													case "allpollu":
 													for (let j = 0; j < json.datapoints.length; j++){
 														this.historicalmeasurements[i][j] = json.datapoints[j][i];
 													}
 													break;
-													
+
 													default:
 													break;
 												}
@@ -504,13 +520,13 @@ module.exports = function(homebridge) {
 										}
 										callback(null);
 									}
-									
+
 								}.bind(this));
-								
+
 							}.bind(this));
-							
+
 						}
-						
+
 					} else {
 						this.log.debug("Pulled historical data in last 30 mins, waiting");
 						callback();
@@ -519,50 +535,50 @@ module.exports = function(homebridge) {
 					this.log.debug("No Foobot devices found");
 				}
 			},
-			
+
 			getAirQuality: function(callback) {
 				this.getLatestValues(function(){
 					callback(null, this.measurements.airquality);
 				}.bind(this));
 			},
-			
+
 			getPM25Density: function(callback) {
 				this.getLatestValues(function(){
 					callback(null, this.measurements.pm);
 				}.bind(this));
 			},
-			
+
 			getVOCDensity: function(callback) {
 				this.getLatestValues(function(){
 					callback(null, this.measurements.voc);
 				}.bind(this));
 			},
-			
+
 			getTemperature: function(callback) {
 				this.getLatestValues(function(){
 					callback(null, this.measurements.tmp);
 				}.bind(this));
 			},
-			
+
 			getHumidity: function(callback) {
 				this.getLatestValues(function(){
 					callback(null, this.measurements.hum);
 				}.bind(this));
 			},
-			
+
 			getCO2: function(callback) {
 				this.getLatestValues(function(){
 					callback(null, this.measurements.co2);
 				}.bind(this));
 			},
-			
+
 			getCO2Peak: function(callback) {
 				this.getHistoricalValues(function(){
 					var peakCO2 = Math.max(...this.historicalmeasurements[4]);
 					callback(null, peakCO2);
 				}.bind(this));
 			},
-			
+
 			getCO2Detected: function(callback) {
 				this.getLatestValues(function(){
 					if (this.measurements.co2 <= 2000){
@@ -572,7 +588,7 @@ module.exports = function(homebridge) {
 					}
 				}.bind(this));
 			},
-			
+
 			getServices: function() {
 				return this.services;
 			}
