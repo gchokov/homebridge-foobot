@@ -26,7 +26,7 @@ module.exports = function(homebridge) {
 		this.historicalmeasurements = [];
 		this.name = config.name || 'Foobot';
 		this.displayName = config.name;
-		this.deviceuuid = config.foobotUUID;
+		this.deviceuuid = config.uuid;
 		this.foobotDeviceIndex = config.foobotDeviceIndex || 0;
 		this.nameAirQuality = config.nameAirQuality || 'Air Quality';
 		this.nameTemperature = config.nameTemperature || 'Temperature';
@@ -406,7 +406,7 @@ module.exports = function(homebridge) {
 													time: moment().unix(),
 													temp: this.measurements.tmp,
 													humidity: this.measurements.hum,
-													ppm: this.measurements.allpollu
+													ppm: this.measurements.co2
 												});
 											};
 											if (this.logTempToFile && this.logTempToFilePath !== 'undefined')
