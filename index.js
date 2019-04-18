@@ -26,6 +26,7 @@ module.exports = function(homebridge) {
 		this.historicalmeasurements = [];
 		this.name = config.name || 'Foobot';
 		this.displayName = config.name;
+		this.deviceuuid = config.foobotUUID;
 		this.foobotDeviceIndex = config.foobotDeviceIndex || 0;
 		this.nameAirQuality = config.nameAirQuality || 'Air Quality';
 		this.nameTemperature = config.nameTemperature || 'Temperature';
@@ -57,9 +58,12 @@ module.exports = function(homebridge) {
 		if(!this.apikey)
 		throw new Error('Your must provide your Foobot API Key.');
 
+		if (this.deviceuuid) {
+			this.havedeviceID = true;
+		}
 
 		if(this.showAirQuality){
-			this.airQualitySensorService = new Service.AirQualitySensor(this.nameAirQuality);
+			this.airQualitySensorService = new Service.AirQualitySensor(this.name + " " + this.nameAirQuality);
 
 			this.airQualitySensorService
 			.getCharacteristic(Characteristic.PM2_5Density)
@@ -96,7 +100,7 @@ module.exports = function(homebridge) {
 		}
 
 		if(this.showTemperature){
-			this.temperatureSensorService = new Service.TemperatureSensor(this.nameTemperature);
+			this.temperatureSensorService = new Service.TemperatureSensor(this.name + " " + this.nameTemperature);
 
 			this.temperatureSensorService
 			.getCharacteristic(Characteristic.CurrentTemperature)
@@ -107,7 +111,7 @@ module.exports = function(homebridge) {
 		}
 
 		if(this.showHumidity){
-			this.humiditySensorService = new Service.HumiditySensor(this.nameHumidity);
+			this.humiditySensorService = new Service.HumiditySensor(this.name + " " + this.nameHumidity);
 
 			this.humiditySensorService
 			.getCharacteristic(Characteristic.CurrentRelativeHumidity)
@@ -118,7 +122,7 @@ module.exports = function(homebridge) {
 		}
 
 		if(this.showCO2){
-			this.CO2SensorService = new Service.CarbonDioxideSensor(this.nameCO2);
+			this.CO2SensorService = new Service.CarbonDioxideSensor(this.name + " " + this.nameCO2);
 
 			this.CO2SensorService
 			.getCharacteristic(Characteristic.CarbonDioxideLevel)
@@ -222,7 +226,7 @@ module.exports = function(homebridge) {
 			},
 
 			GetFoobotID: function(callback) {
-				if(this.havedeviceID != 1){
+				if(!this.havedeviceID){
 					//Build request and get UUID
 					this.login(function(){
 						var options = {
@@ -242,17 +246,17 @@ module.exports = function(homebridge) {
 							else {
 								var json = JSON.parse(body);
 								var numberofdevices = '';
-								var quotaReached = JSON.stringify(json).includes("quota exceeded. Tomorrow is another day") ? true:false;
+								var quotaReached = JSON.stringify(json).includes("quota exceeded") ? true:false;
 								if (quotaReached)
 								{
 									this.log.debug('\x1b[36m%s\x1b[0m',"Foobot specified is higher than number of foobot devices available, or API quota exceeded");
-									this.havedeviceID = 0;
+									this.havedeviceID = false;
 								}
 								else if (this.foobotDeviceIndex < json.length)
 								{
 									this.deviceuuid = json[this.foobotDeviceIndex].uuid;
 									this.devicename = json[this.foobotDeviceIndex].name;
-									this.havedeviceID = 1;
+									this.havedeviceID = true;
 									this.log.debug("Got device ID");
 								}
 								callback(null);
@@ -296,6 +300,8 @@ module.exports = function(homebridge) {
 										var json = JSON.parse(body);
 										this.lastSensorRefresh = new Date();
 
+										// console.log(json);
+
 										var invalidKey = JSON.stringify(json).includes("invalid key") ? true:false;
 										if (invalidKey)
 										{
@@ -310,13 +316,13 @@ module.exports = function(homebridge) {
 											this.log.error('\x1b[36m%s\x1b[0m',"Setting Sensors to 0 to continue bridge operation.");
 										}
 
-										var noDataPoints = (json.datapoints == 'undefined');
+										var noDataPoints = (json.datapoints === 'undefined');
 										if (noDataPoints)
 										{
 											this.log.error('\x1b[36m%s\x1b[0m',"No datapoints in the response");
 										}
 
-										if (invalidKey || quotaReached || noDataPoints)
+										if (invalidKey || quotaReached || noDataPoints) {
 											this.measurements.pm = "0";
 											this.measurements.tmp = "0";
 											this.measurements.hum = "0";
@@ -328,6 +334,7 @@ module.exports = function(homebridge) {
 										}
 										else if (json.datapoints.length >= 1)
 										{
+											// console.log(json.datapoints);
 											for (let i = 0; i < json.sensors.length; i++) {
 												switch(json.sensors[i]) {
 													case "pm":
@@ -357,8 +364,7 @@ module.exports = function(homebridge) {
 													];
 													for(var item of levels){
 														if(json.datapoints[0][i] >= item[1] && json.datapoints[0][i] <= item[0]){
-															this.measurements.airquality = item[2];
-															this.measurements.airqualityppm = json.datapoints[0][i];
+															this.measurements.airqualityppm = item[2];
 														}
 													}
 													break;
@@ -369,14 +375,28 @@ module.exports = function(homebridge) {
 													break;
 
 													case "allpollu":
-													this.measurements.allpollu = item[1];
-													//this.log.debug("All Pollution:", this.measurements.allpollu, json.units[i]);
+													this.measurements.allpollu = json.datapoints[0][i];
+													// console.log("All Pollution:", this.measurements.allpollu, json.units[i]);
+													var levels = [
+														[100, 91, Characteristic.AirQuality.POOR],
+														[90, 71, Characteristic.AirQuality.INFERIOR],
+														[70, 51, Characteristic.AirQuality.FAIR],
+														[50, 26, Characteristic.AirQuality.GOOD],
+														[25, 0, Characteristic.AirQuality.EXCELLENT],
+													];
+													for(var item of levels){
+														if(json.datapoints[0][i] > item[1] && json.datapoints[0][i] <= item[0]){
+															this.measurements.airquality = item[2];
+														}
+													}
+													// console.log("Air Quality:", this.measurements.airquality);
 													break;
 
 													default:
 													break;
 												}
 											}
+											// console.log(this.measurements);
 
 											//Fakegato-history add data point
 											//temperature, humidity and air quality
@@ -386,7 +406,7 @@ module.exports = function(homebridge) {
 													time: moment().unix(),
 													temp: this.measurements.tmp,
 													humidity: this.measurements.hum,
-													ppm: this.measurements.airqualityppm
+													ppm: this.measurements.allpollu
 												});
 											};
 											if (this.logTempToFile && this.logTempToFilePath !== 'undefined')
@@ -457,7 +477,7 @@ module.exports = function(homebridge) {
 
 										var json = JSON.parse(body);
 
-										var quotaReached = JSON.stringify(json).includes("quota exceeded. Tomorrow is another day") ? true:false;
+										var quotaReached = JSON.stringify(json).includes("quota exceeded") ? true:false;
 										if (quotaReached)
 										{
 											this.log.debug('\x1b[43m',"Quota exceeded, consider adding refreshing less often");
