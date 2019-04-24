@@ -44,6 +44,7 @@ module.exports = function(homebridge) {
 		this.appliance.info = {};
 
 		this.appliance.info.firmware = "1.2.15"; //tested with this firmware
+		this.appliance.info.uuid = this.name;
 
 		this.base_API_url = "https://api.foobot.io/v2/user/" + this.username + "/homehost/";
 
@@ -60,6 +61,7 @@ module.exports = function(homebridge) {
 
 		if (this.deviceuuid) {
 			this.havedeviceID = true;
+			this.appliance.info.uuid = this.deviceuuid;
 		}
 
 		if(this.showAirQuality){
