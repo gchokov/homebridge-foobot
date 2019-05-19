@@ -4,7 +4,7 @@
       "accessory": "Foobot",
       "name": "Foobot",
       "foobotDeviceIndex": 0,
-      "uuid": "Optional - device uuid string in case you have multiple devices",
+      "uuid": "Optional - device uuid string in case you have multiple devices. Otherwise, leave blank",
       "username": "email@domain.com",
       "password": "password",
       "apikey": "a_long_string_of_api_key_here",
