@@ -10,6 +10,10 @@ This is a [homebridge](https://github.com/nfarina/homebridge) plugin which lets 
 
 This plugin is heavily based on [homebridge-blueair](https://github.com/mylesgray/homebridge-blueair) plugin. Without it, this plugin won't be here now. Thank you **@mylesgray** for the inspiration and work on the blueair and foobot api integration!
 
+Also, thanks to **@iRonin** for contributing (https://github.com/iRonin)!
+
+#What is Foobot?
+
 Foobot is an awesome little indoor quality monitor gadget by Airboxlab, that I use for years now. Not really sure if official HomeKit support will ever be announced, so time to integrate it with the rest of the HomeKit accessories I already have. 
 
 # General info
@@ -56,6 +60,7 @@ Once you get it working, you can turn off individual sensors, or disable the his
       "accessory": "FooBot",
       "name": "Foobot",
       "foobotDeviceIndex": 0,
+      "uuid": "Optional - device uuid string in case you have multiple devices. Otherwise, leave blank",
       "username": "email@domain.com",
       "password": "password",
       "apikey": "a_long_string_of_api_key_here",
