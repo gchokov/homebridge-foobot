@@ -18,7 +18,8 @@
       "showCO2": true,
       "getHistoricalStats": true,
       "logTempToFile": true,
-      "logTempToFilePath": "/Users/georgichokov/foo/temp.txt"
+      "logTempToFilePath": "/Users/georgichokov/foo/temp.txt",
+      "updateInterval": 600000
   },
 
 ]

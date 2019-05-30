@@ -12,7 +12,7 @@ This plugin is heavily based on [homebridge-blueair](https://github.com/mylesgra
 
 Also, thanks to **@iRonin** for contributing (https://github.com/iRonin)!
 
-#What is Foobot?
+# What is Foobot?
 
 Foobot is an awesome little indoor quality monitor gadget by Airboxlab, that I use for years now. Not really sure if official HomeKit support will ever be announced, so time to integrate it with the rest of the HomeKit accessories I already have. 
 
@@ -74,7 +74,8 @@ Once you get it working, you can turn off individual sensors, or disable the his
       "showCO2": true,
       "getHistoricalStats": true,
       "logTempToFile": true,
-      "logTempToFilePath": "/Users/georgichokov/foo/temp.txt"
+      "logTempToFilePath": "/Users/georgichokov/foo/temp.txt",
+      "updateInterval": 600000
   },
   .
   .

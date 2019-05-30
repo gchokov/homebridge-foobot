@@ -39,6 +39,7 @@ module.exports = function(homebridge) {
 		this.getHistoricalStats = config.getHistoricalStats || false;
 		this.logTempToFile = config.logTempToFile || false;
 		this.logTempToFilePath = config.logTempToFilePath || 'undefined';
+		this.updateInterval = config.updateInterval || 600000; //10 minutes by default
 
 		this.appliance = {};
 		this.appliance.info = {};
@@ -176,7 +177,7 @@ module.exports = function(homebridge) {
 
 		//Poll info on first run and every 10 minutes
 		this.getAllState();
-		setInterval(this.getAllState.bind(this), 600000); //refresh time 600000
+		setInterval(this.getAllState.bind(this), this.updateInterval); //refresh time default 600000
 	}
 
 
