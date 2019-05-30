@@ -51,6 +51,7 @@ Once you get it working, you can turn off individual sensors, or disable the his
 
 *logTempToFile* and *logTempToFilePath* allows you to specify file, in which the temperature will be logged. This way, external services can read from this file and use it as input - for example your AC, which you might control with an IR blaster such as [Broadlink RM Mini3](https://github.com/lprhodes/homebridge-broadlink-rm).
 
+*updateInterval* - By default is set to 600000ms (10 minutes)
 ```json
  "accessories": [
   .
