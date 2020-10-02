@@ -58,7 +58,7 @@ Once you get it working, you can turn off individual sensors, or disable the his
   .
   .
   {
-      "accessory": "FooBot",
+      "accessory": "Foobot",
       "name": "Foobot",
       "foobotDeviceIndex": 0,
       "uuid": "Optional - device uuid string in case you have multiple devices. Otherwise, leave blank",
