@@ -311,40 +311,46 @@ module.exports = function(homebridge) {
 									}
 									else {
 										this.measurements = {};
-										var json = JSON.parse(body);
 										this.lastSensorRefresh = new Date();
 
-										// console.log(json);
+										var json = null;
+										try {
+											json = JSON.parse(body);
+										} catch (e) {
+											this.log.error('\x1b[36m%s\x1b[0m',"Could not parse API response: " + e.message);
+										}
 
-										var invalidKey = JSON.stringify(json).includes("invalid key") ? true:false;
+										var invalidKey = json !== null && JSON.stringify(json).includes("invalid key");
 										if (invalidKey)
 										{
 											this.log.error('\x1b[36m%s\x1b[0m',"API key invalid");
 										}
 
 
-										var quotaReached = JSON.stringify(json).includes("quota exceeded") ? true:false;
+										var quotaReached = json !== null && JSON.stringify(json).includes("quota exceeded");
 										if (quotaReached)
 										{
 											this.log.error('\x1b[36m%s\x1b[0m',"Quota exceeded, consider refreshing less often");
 											this.log.error('\x1b[36m%s\x1b[0m',"Setting Sensors to 0 to continue bridge operation.");
+											//Back off for ~1 hour so we don't burn the daily API quota
+											this.lastSensorRefresh = new Date(Date.now() + 55 * 60 * 1000);
 										}
 
-										var noDataPoints = (json.datapoints === 'undefined');
-										if (noDataPoints)
+										var noDataPoints = (json === null || !Array.isArray(json.datapoints) || json.datapoints.length === 0);
+										if (noDataPoints && !invalidKey && !quotaReached)
 										{
 											this.log.error('\x1b[36m%s\x1b[0m',"No datapoints in the response");
 										}
 
 										if (invalidKey || quotaReached || noDataPoints) {
-											this.measurements.pm = "0";
-											this.measurements.tmp = "0";
-											this.measurements.hum = "0";
-											this.measurements.co2 = "0";
-											this.measurements.airquality = "No data"
-											this.measurements.airqualityppm = "0";
-											this.measurements.voc = "0"
-											this.measurements.allpollu = "0";
+											this.measurements.pm = 0;
+											this.measurements.tmp = 0;
+											this.measurements.hum = 0;
+											this.measurements.co2 = 0;
+											this.measurements.airquality = 0; //Characteristic.AirQuality.UNKNOWN
+											this.measurements.airqualityppm = 0;
+											this.measurements.voc = 0;
+											this.measurements.allpollu = 0;
 										}
 										else if (json.datapoints.length >= 1)
 										{
@@ -410,7 +416,14 @@ module.exports = function(homebridge) {
 													break;
 												}
 											}
-											// console.log(this.measurements);
+											//Default any sensor missing from the response to 0 so
+											//characteristics never receive undefined/NaN
+											var expected = ['pm', 'tmp', 'hum', 'co2', 'voc', 'allpollu', 'airquality', 'airqualityppm'];
+											for (var k of expected) {
+												if (typeof this.measurements[k] === 'undefined') {
+													this.measurements[k] = 0;
+												}
+											}
 
 											//Fakegato-history add data point
 											//temperature, humidity and air quality
@@ -452,9 +465,12 @@ module.exports = function(homebridge) {
 							this.log.debug("Sensor data polled in last 5 minutes, waiting.");
 							callback(null);
 						}
+					} else {
+						callback(null);
 					}
 				} else {
 					this.log.debug("No Foobot devices for this account found");
+					callback(null);
 				}
 			},
 
@@ -495,18 +511,26 @@ module.exports = function(homebridge) {
 									}
 									else {
 
-										var json = JSON.parse(body);
+										var json = null;
+										try {
+											json = JSON.parse(body);
+										} catch (e) {
+											this.log.debug("Could not parse historical API response: " + e.message);
+										}
 
-										var quotaReached = JSON.stringify(json).includes("quota exceeded") ? true:false;
+										var quotaReached = json !== null && JSON.stringify(json).includes("quota exceeded");
 										if (quotaReached)
 										{
 											this.log.debug('\x1b[43m',"Quota exceeded, consider adding refreshing less often");
 											this.log.debug('\x1b[43m',"History not refreshed");
-											callback(null);
+											//Back off for the normal 30 minute window instead of retrying on every request
+											this.lastHistoricalRefresh = new Date();
 										}
-										else if ((json.datapoints.length >= 1))
+										else if (json !== null && Array.isArray(json.datapoints) && json.datapoints.length >= 1)
 										{
 											this.log.debug("Downloaded " + json.datapoints.length + " datapoints for " + json.sensors.length + " senors");
+											this.historicalmeasurements = [];
+											this.historicalsensors = json.sensors;
 											for (let i = 0; i < json.sensors.length; i++) {
 												this.historicalmeasurements.push([]);
 												switch(json.sensors[i]) {
@@ -565,14 +589,18 @@ module.exports = function(homebridge) {
 
 							}.bind(this));
 
+						} else {
+							this.log.debug("Pulled historical data in last 30 mins, waiting");
+							callback(null);
 						}
 
 					} else {
 						this.log.debug("Pulled historical data in last 30 mins, waiting");
-						callback();
+						callback(null);
 					}
 				} else {
 					this.log.debug("No Foobot devices found");
+					callback(null);
 				}
 			},
 
@@ -614,8 +642,14 @@ module.exports = function(homebridge) {
 
 			getCO2Peak: function(callback) {
 				this.getHistoricalValues(function(){
-					var peakCO2 = Math.max(...this.historicalmeasurements[4]);
-					callback(null, peakCO2);
+					var co2Index = Array.isArray(this.historicalsensors) ? this.historicalsensors.indexOf('co2') : 4;
+					var co2History = co2Index >= 0 ? this.historicalmeasurements[co2Index] : undefined;
+					if (Array.isArray(co2History) && co2History.length > 0) {
+						callback(null, Math.max(...co2History));
+					} else {
+						//No history available (quota exceeded, device offline, etc.)
+						callback(null, 0);
+					}
 				}.bind(this));
 			},
 
