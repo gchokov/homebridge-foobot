@@ -1,10 +1,9 @@
 /* jshint node: true */
 "use strict";
-var request = require("request");
+var https = require("https");
 var os = require('os');
 var fs = require('fs');
 var path = require('path');
-var fs1 = require('file-system');
 var inherits = require('util').inherits;
 var Service, Characteristic;
 var moment = require('moment');
@@ -192,12 +191,24 @@ module.exports = function(homebridge) {
 		},
 
 		httpRequest: function(options, callback) {
-			request(options,
-				function (error, response, body) {
-					this.log.debug("Polled API:", options.url, options.json);
-					callback(error, response, body);
+			var req = https.request(options.url, {
+				method: (options.method || 'GET').toUpperCase(),
+				headers: options.headers
+			}, function (response) {
+				var chunks = [];
+				response.on('data', function (chunk) {
+					chunks.push(chunk);
+				});
+				response.on('end', function () {
+					this.log.debug("Polled API:", options.url);
+					callback(null, response, Buffer.concat(chunks).toString('utf8'));
 				}.bind(this));
-			},
+			}.bind(this));
+			req.on('error', function (error) {
+				callback(error);
+			});
+			req.end();
+		},
 
 			login: function(callback) {
 				if(this.loggedin != 1){
@@ -414,12 +425,18 @@ module.exports = function(homebridge) {
 											};
 											if (this.logTempToFile && this.logTempToFilePath !== 'undefined')
 											{
-												fs1.writeFile(String(this.logTempToFilePath), String(this.measurements.tmp), function (err) {
-													if (err)
+												fs.mkdir(path.dirname(String(this.logTempToFilePath)), { recursive: true }, function (mkdirErr) {
+													if (mkdirErr)
 													{
-														return console.log(err);
-													};
-												});
+														return console.log(mkdirErr);
+													}
+													fs.writeFile(String(this.logTempToFilePath), String(this.measurements.tmp), function (err) {
+														if (err)
+														{
+															return console.log(err);
+														};
+													});
+												}.bind(this));
 											}
 											this.log.debug("Sensor data refreshed");
 										} else {

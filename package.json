@@ -14,16 +14,17 @@
     "url": "http://github.com/gchokov/homebridge-foobot/issues"
   },
   "engines": {
-    "node": ">=0.8.4",
+    "node": ">=20.0.0",
     "homebridge": ">=0.3.1"
   },
   "dependencies": {
-    "fakegato-history": "^0.6.3",
-    "file-system": "^1.2.2",
-    "request": "^2.88.0",
-    "util": "^0.11.1"
+    "fakegato-history": "^0.6.7",
+    "moment": "^2.30.1"
   },
   "scripts": {
     "release": "generate-release"
+  },
+  "overrides": {
+    "minimatch": "^10.0.3"
   }
 }
